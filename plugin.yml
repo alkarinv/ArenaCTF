@@ -1,0 +1,10 @@
+name: ArenaCTF
+version: 0.8
+author: Alkarin
+
+description: Capture the flag event using Arenas
+depend: [BattleArena]
+main: mc.alk.ctf.CTF
+commands:
+    ctf:
+        aliases: [captureTheFlag]

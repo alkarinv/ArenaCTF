@@ -1,0 +1,3 @@
+version: 1.0
+
+flagRespawnTimer: 60 ## How long before a dropped flag automatically returns
