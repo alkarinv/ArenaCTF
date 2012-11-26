@@ -9,12 +9,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import mc.alk.arena.BattleArena;
 import mc.alk.arena.controllers.PlayerStoreController;
+import mc.alk.arena.events.matches.MatchMessageEvent;
 import mc.alk.arena.objects.MatchResult;
 import mc.alk.arena.objects.MatchState;
 import mc.alk.arena.objects.arenas.Arena;
 import mc.alk.arena.objects.events.MatchEventHandler;
 import mc.alk.arena.objects.teams.Team;
 import mc.alk.arena.serializers.Persist;
+import mc.alk.arena.util.Log;
 import mc.alk.arena.util.TeamUtil;
 
 import org.bukkit.Bukkit;
@@ -34,7 +36,7 @@ import org.bukkit.inventory.ItemStack;
 
 public class CTFArena extends Arena implements Runnable{
 	public static final boolean DEBUG = false;
-	
+
 	private static final long FLAG_RESPAWN_TIMER = 20*15L;
 
 	@Persist
@@ -48,7 +50,7 @@ public class CTFArena extends Arena implements Runnable{
 
 	final Map<Team,Integer> scores = new HashMap<Team,Integer>();
 
-	final int capturesToWin = 3;
+	public static int capturesToWin = 3;
 
 	int runcount = 0;
 
@@ -64,14 +66,20 @@ public class CTFArena extends Arena implements Runnable{
 	@Override
 	public void onStart(){
 		List<Team> teams = getTeams();
+		if (flagSpawns.size() < teams.size()){
+			Log.err("Cancelling CTF as there " + teams.size()+" teams but only " + flagSpawns.size() +" flags");
+			this.getMatch().cancelMatch();
+			return;
+		}
 		timerid = Bukkit.getScheduler().scheduleSyncRepeatingTask(CTF.getSelf(), this, 20L,20L);
 
 		/// Set all scores to 0
 		/// Set up flag locations
-		for (int i=0;i<teams.size();i++){
+		int i =0;
+		for (Location l: flagSpawns.values()){
+			l = l.clone();
 			Team t = teams.get(i);
 			/// Create our flag
-			Location l = flagSpawns.get(i).clone();
 			l.setY(l.getY()+0.5); /// raise it up just a tad
 			ItemStack is = TeamUtil.getTeamHead(i);
 			Item item = l.getBlock().getWorld().dropItem(l,is);
@@ -82,6 +90,7 @@ public class CTFArena extends Arena implements Runnable{
 
 			/// set our score
 			scores.put(t, 0);
+			i++;
 			if (DEBUG) System.out.println("Team t = " + t);
 		}
 	}
@@ -95,9 +104,8 @@ public class CTFArena extends Arena implements Runnable{
 	@Override
 	public void onCancel(){
 		cancelTimers();
-		removeFlags();		
+		removeFlags();
 	}
-
 
 	@MatchEventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent event){
@@ -135,23 +143,21 @@ public class CTFArena extends Arena implements Runnable{
 				Location l = flag.getHomeLocation();
 				Item item = l.getBlock().getWorld().dropItem(l,flag.is);
 				flag.setEntity(item);
-				flag.home = true;			
+				flag.home = true;
 				flags.put(item.getEntityId(), flag);
-				t.sendMessage(p.getDisplayName() +" has returned your flag home");
+				t.sendMessage("&6"+p.getDisplayName() +"&2 has returned your flag home");
 			}
 		} else {
 			/// Give the enemy the flag
 			playerPickedUpFlag(p,flag);
 			for (Team team : getTeams()){
 				if (team.equals(t)){
-					team.sendMessage(p.getDisplayName() +" has taken the enemy flag!");					
+					team.sendMessage("&6"+p.getDisplayName() +"&a has taken the enemy flag!");
 				} else {
-					team.sendMessage(p.getDisplayName() +" has taken your flag!");
+					team.sendMessage("&6"+p.getDisplayName() +"&c has taken your flag!");
 				}
 			}
 		}
-		//			playerHoldingFlag.put(p.getEntityId(), event.getItem().getItemStack());
-
 	}
 
 	@MatchEventHandler
@@ -160,7 +166,7 @@ public class CTFArena extends Arena implements Runnable{
 		if (flags.containsKey(event.getEntity().getEntityId())){
 			if (DEBUG) System.out.println("not despawning flag!!!!!!!!!!!  " + event.getEntity().getEntityId());
 			event.setCancelled(true);
-		}		
+		}
 	}
 
 	@MatchEventHandler
@@ -177,7 +183,7 @@ public class CTFArena extends Arena implements Runnable{
 				final int amt = is.getAmount();
 				if (amt > 1)
 					is.setAmount(amt-1);
-				else 
+				else
 					is.setType(Material.AIR);
 				break;
 			}
@@ -194,7 +200,7 @@ public class CTFArena extends Arena implements Runnable{
 		/// Check to see if they moved a block, or if they are holding a flag
 		if (!(event.getFrom().getBlockX() != event.getTo().getBlockX()
 				|| event.getFrom().getBlockY() != event.getTo().getBlockY()
-				|| event.getFrom().getBlockZ() != event.getTo().getBlockZ()) 
+				|| event.getFrom().getBlockZ() != event.getTo().getBlockZ())
 				|| !flags.containsKey(event.getPlayer().getEntityId())){
 			return;}
 		if (this.getMatchState() != MatchState.ONSTART)
@@ -208,8 +214,7 @@ public class CTFArena extends Arena implements Runnable{
 		//				nearLocation(f.getHomeLocation(),event.getTo()) +""
 		//				+ l.getBlockX() +"  " + l2.getBlockX() +"  " + l.getBlockZ() +"  " + l2.getBlockZ() +"  " + l.getBlockY() +" " +  l2.getBlockY());
 		if (f.home && nearLocation(f.getHomeLocation(),event.getTo())){
-			teamScored(t);
-		}
+			teamScored(t);}
 	}
 
 	private void cancelTimers(){
@@ -246,7 +251,7 @@ public class CTFArena extends Arena implements Runnable{
 		flags.put(item.getEntityId(), flag);
 		startFlagRespawnTimer(flag);
 	}
-	
+
 	private void spawnFlag(Flag flag){
 		Entity ent = flag.getEntity();
 		flags.remove(ent.getEntityId());
@@ -255,7 +260,7 @@ public class CTFArena extends Arena implements Runnable{
 		Location l = flag.getHomeLocation();
 		Item item = l.getBlock().getWorld().dropItem(l,flag.is);
 		flag.setEntity(item);
-		flag.home = true;		
+		flag.home = true;
 		flags.put(item.getEntityId(), flag);
 	}
 
@@ -267,7 +272,7 @@ public class CTFArena extends Arena implements Runnable{
 			public void run() {
 				spawnFlag(flag);
 				Team team = flag.getTeam();
-				team.sendMessage("Your flag has been returned home");
+				team.sendMessage(ChatColor.GREEN+"Your flag has been returned home");
 			}
 		}, FLAG_RESPAWN_TIMER);
 		respawnTimers.put(flag, timerid);
@@ -276,13 +281,23 @@ public class CTFArena extends Arena implements Runnable{
 	private void cancelFlagRespawnTimer(Flag flag){
 		Integer timerid = respawnTimers.get(flag);
 		if (timerid != null)
-			Bukkit.getScheduler().cancelTask(timerid);		
+			Bukkit.getScheduler().cancelTask(timerid);
 	}
 
 	private void teamScored(Team team) {
 		int teamScore = addScore(team);
 		if (DEBUG) System.out.println("teamScore = " + teamScore +"   " + capturesToWin);
-		StringBuilder sb = new StringBuilder();
+		String score = getScoreString();
+		this.getMatch().sendMessage(team.getDisplayName() +" &ehas captured the flag!");
+		this.getMatch().sendMessage(score);
+		if (teamScore >= capturesToWin ){
+			setWinner(team);}
+		resetFlags();
+	}
+
+
+	public String getScoreString() {
+		StringBuilder sb = new StringBuilder("&eScore ");
 		List<Team> teams = getTeams();
 		boolean first = true;
 		for (int i=0;i<teams.size();i++){
@@ -291,13 +306,9 @@ public class CTFArena extends Arena implements Runnable{
 			sb.append(t.getDisplayName() +"&6:" + scores.get(t));
 			first = false;
 		}
-		this.getMatch().sendMessage(team.getDisplayName() +" &ehas captured the flag!");
-		this.getMatch().sendMessage("&eScore " + sb.toString() +"  &eScoreToWin=&6"+capturesToWin);
-		if (teamScore >= capturesToWin ){
-			setWinner(team);}
-		resetFlags();
+		sb.append("  &eScoreToWin=&6"+capturesToWin);
+		return sb.toString();
 	}
-
 
 	private void resetFlags() {
 		/// remove flags from field
@@ -360,4 +371,8 @@ public class CTFArena extends Arena implements Runnable{
 		}
 	}
 
+	@MatchEventHandler
+	public void onMatchMessage(MatchMessageEvent event){
+		event.setMatchMessage(getScoreString());
+	}
 }

@@ -4,6 +4,7 @@ import mc.alk.arena.BattleArena;
 import mc.alk.arena.serializers.ArenaSerializer;
 import mc.alk.arena.util.Log;
 
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -21,7 +22,11 @@ public class CTF extends JavaPlugin{
 		name = pdfFile.getName();
 		version = pdfFile.getVersion();
 		BattleArena.registerEventType(this, "CaptureTheFlag", "ctf", CTFArena.class, new CTFExecutor());
-		
+
+		FileConfiguration config = this.getConfig();
+		CTFArena.capturesToWin = config.getInt("capturesToWin", 3);
+		saveDefaultConfig();
+
 		Log.info("[" + getName()+ "] v" + getDescription().getVersion()+ " enabled!");
 	}
 
