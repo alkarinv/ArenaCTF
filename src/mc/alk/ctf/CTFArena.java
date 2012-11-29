@@ -77,10 +77,10 @@ public class CTFArena extends Arena implements Runnable{
 		/// Set up flag locations
 		int i =0;
 		for (Location l: flagSpawns.values()){
-			l = l.clone();
+//			l = l.clone();
 			Team t = teams.get(i);
 			/// Create our flag
-			l.setY(l.getY()+0.5); /// raise it up just a tad
+//			l.setY(l.getY()+0.2); /// raise it up just a tad
 			ItemStack is = TeamUtil.getTeamHead(i);
 			Item item = l.getBlock().getWorld().dropItem(l,is);
 			Flag f = new Flag(t,is,l);
@@ -328,7 +328,11 @@ public class CTFArena extends Arena implements Runnable{
 	}
 
 	public void addFlag(Integer i, Location location) {
-		flagSpawns.put(i, location);
+		Location l = location.clone();
+		l.setX(location.getBlockX()+0.5);
+		l.setY(location.getBlockY()+0.5);
+		l.setZ(location.getBlockZ()+0.5);
+		flagSpawns.put(i, l);
 	}
 
 	public void clearFlags() {
@@ -373,6 +377,8 @@ public class CTFArena extends Arena implements Runnable{
 
 	@MatchEventHandler
 	public void onMatchMessage(MatchMessageEvent event){
-		event.setMatchMessage(getScoreString());
+		if (event.getState() == MatchState.ONMATCHINTERVAL){
+			event.setMatchMessage(getScoreString());
+		}
 	}
 }

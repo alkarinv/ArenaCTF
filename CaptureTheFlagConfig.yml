@@ -9,6 +9,9 @@ CaptureTheFlag:
     type: CaptureTheFlag
     database: ctf # or delete if you dont want wins/losses/top, needs BattleTracker
     prefix: "&8[CTF]&e"
+    nTeams: 2
+    teamSize: 1+
+    victoryCondition: highestKills
     preReqs:
         options: [clearInventory]
     onJoin:
@@ -18,7 +21,7 @@ CaptureTheFlag:
     onPrestart:
         options: [pvpOff, deEnchant, woolTeams]
     onStart:
-        options: [pvpOn, teleportIn, giveItems, hunger=20]
+        options: [pvpOn, teleportIn, hunger=20]
         giveClass:
             default: gladiator
     onDeath:

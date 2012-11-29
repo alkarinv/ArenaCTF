@@ -1,16 +1,16 @@
 package mc.alk.ctf;
 
-import mc.alk.arena.executors.BAExecutor;
 import mc.alk.arena.executors.MCCommand;
+import mc.alk.arena.executors.ReservedArenaEventExecutor;
 import mc.alk.arena.objects.ArenaPlayer;
 import mc.alk.arena.objects.arenas.Arena;
 
 import org.bukkit.command.CommandSender;
 
-public class CTFExecutor extends BAExecutor{
+public class CTFReservedArenaExecutor extends ReservedArenaEventExecutor{
 
 	@MCCommand(cmds={"addFlag"}, inGame=true, admin=true)
-	public boolean addFlag(ArenaPlayer sender, Arena arena, Integer index) {
+	public boolean addBlock(ArenaPlayer sender, Arena arena, Integer index) {
 		return CTFExecutors.addFlag(sender,arena,index);
 	}
 

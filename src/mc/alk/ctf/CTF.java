@@ -10,7 +10,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class CTF extends JavaPlugin{
 
-	static String name; 
+	static String name;
 	static String version;
 	static CTF plugin;
 	static ArenaSerializer arenaSerializer;
@@ -21,11 +21,14 @@ public class CTF extends JavaPlugin{
 		PluginDescriptionFile pdfFile = plugin.getDescription();
 		name = pdfFile.getName();
 		version = pdfFile.getVersion();
-		BattleArena.registerEventType(this, "CaptureTheFlag", "ctf", CTFArena.class, new CTFExecutor());
-
-		FileConfiguration config = this.getConfig();
-		CTFArena.capturesToWin = config.getInt("capturesToWin", 3);
 		saveDefaultConfig();
+		FileConfiguration config = getConfig();
+		CTFArena.capturesToWin = config.getInt("capturesToWin", 3);
+		if (config.getBoolean("isEvent",true)){
+			BattleArena.registerEventType(this, "CaptureTheFlag", "ctf", CTFArena.class, new CTFReservedArenaExecutor());
+		} else {
+			BattleArena.registerMatchType(this, "CaptureTheFlag", "ctf", CTFArena.class, new CTFExecutor());
+		}
 
 		Log.info("[" + getName()+ "] v" + getDescription().getVersion()+ " enabled!");
 	}
