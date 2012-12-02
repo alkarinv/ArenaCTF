@@ -6,6 +6,7 @@
 CaptureTheFlag:
     enabled: true
     command: ctf
+    matchTime: 300 # in seconds
     type: CaptureTheFlag
     database: ctf # or delete if you dont want wins/losses/top, needs BattleTracker
     prefix: "&8[CTF]&e"
@@ -22,13 +23,13 @@ CaptureTheFlag:
         options: [pvpOff, deEnchant, woolTeams]
     onStart:
         options: [pvpOn, teleportIn, hunger=20]
-        giveClass:
-            default: gladiator
     onDeath:
-        options: [clearInventory]
+        options: [clearInventory, respawn]
     onComplete:
-        options: [teleportOut, deEnchant, undisguise]
+        options: [teleportOut, clearInventory, deEnchant, undisguise]
     onSpawn:
         options: [health=20, hunger=20]
+        giveClass:
+            default: gladiator
     winner:
         options: [health=20, hunger=20]
