@@ -16,6 +16,7 @@ import mc.alk.arena.objects.arenas.Arena;
 import mc.alk.arena.objects.events.MatchEventHandler;
 import mc.alk.arena.objects.teams.Team;
 import mc.alk.arena.serializers.Persist;
+import mc.alk.arena.util.InventoryUtil;
 import mc.alk.arena.util.Log;
 import mc.alk.arena.util.TeamUtil;
 
@@ -33,17 +34,20 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 
 public class CTFArena extends Arena implements Runnable{
 	public static final boolean DEBUG = false;
 
 	private static final long FLAG_RESPAWN_TIMER = 20*15L;
+	private static final long TIME_BETWEN_CAPTURES = 2000;
 
 	@Persist
 	final HashMap<Integer,Location> flagSpawns = new HashMap<Integer,Location>();
 
 	Random rand = new Random();
 
+	/// The following variables should be reinitialized and set up every match
 	final Map<Integer, Flag> flags = new ConcurrentHashMap<Integer, Flag>();
 
 	final ConcurrentHashMap<Team, Flag> teamFlags = new ConcurrentHashMap<Team, Flag>();
@@ -58,9 +62,20 @@ public class CTFArena extends Arena implements Runnable{
 
 	Map<Flag, Integer> respawnTimers = new HashMap<Flag,Integer>();
 
+	final Map<Team, Long> lastCapture = new ConcurrentHashMap<Team, Long>();
 
 	@Override
 	public void onOpen(){
+		resetVars();
+	}
+
+	private void resetVars(){
+		flags.clear();
+		teamFlags.clear();
+		scores.clear();
+		cancelTimers();
+		respawnTimers.clear();
+		lastCapture.clear();
 	}
 
 	@Override
@@ -80,9 +95,8 @@ public class CTFArena extends Arena implements Runnable{
 //			l = l.clone();
 			Team t = teams.get(i);
 			/// Create our flag
-//			l.setY(l.getY()+0.2); /// raise it up just a tad
 			ItemStack is = TeamUtil.getTeamHead(i);
-			Item item = l.getBlock().getWorld().dropItem(l,is);
+			Item item = spawnItem(l,is);
 			Flag f = new Flag(t,is,l);
 			f.setEntity(item);
 			flags.put(item.getEntityId(), f);
@@ -95,6 +109,12 @@ public class CTFArena extends Arena implements Runnable{
 		}
 	}
 
+	private Item spawnItem(Location l, ItemStack is) {
+		Item item = l.getBlock().getWorld().dropItem(l,is);
+		item.setVelocity(new Vector(0,0,0));
+		return item;
+	}
+
 	@Override
 	public void onVictory(MatchResult result){
 		cancelTimers();
@@ -102,9 +122,8 @@ public class CTFArena extends Arena implements Runnable{
 	}
 
 	@Override
-	public void onCancel(){
-		cancelTimers();
-		removeFlags();
+	public void onFinish(){
+		resetVars();
 	}
 
 	@MatchEventHandler
@@ -141,7 +160,7 @@ public class CTFArena extends Arena implements Runnable{
 				flags.remove(id);
 				event.getItem().remove();
 				Location l = flag.getHomeLocation();
-				Item item = l.getBlock().getWorld().dropItem(l,flag.is);
+				Item item = spawnItem(l,flag.is);
 				flag.setEntity(item);
 				flag.home = true;
 				flags.put(item.getEntityId(), flag);
@@ -189,7 +208,7 @@ public class CTFArena extends Arena implements Runnable{
 			}
 		}
 		Location l = event.getEntity().getLocation();
-		Item item = l.getBlock().getWorld().dropItem(l,flag.is);
+		Item item = l.getBlock().getWorld().dropItemNaturally(l,flag.is);
 		playerDroppedFlag(flag, item);
 	}
 
@@ -214,7 +233,11 @@ public class CTFArena extends Arena implements Runnable{
 		//				nearLocation(f.getHomeLocation(),event.getTo()) +""
 		//				+ l.getBlockX() +"  " + l2.getBlockX() +"  " + l.getBlockZ() +"  " + l2.getBlockZ() +"  " + l.getBlockY() +" " +  l2.getBlockY());
 		if (f.home && nearLocation(f.getHomeLocation(),event.getTo())){
-			teamScored(t);}
+			/// for some reason sometimes its not cleared in removeFlags
+			/// so do it explicitly now
+			InventoryUtil.removeItems(event.getPlayer().getInventory(), f.is);
+			teamScored(t);
+		}
 	}
 
 	private void cancelTimers(){
@@ -258,7 +281,7 @@ public class CTFArena extends Arena implements Runnable{
 		if (ent != null && ent instanceof Item){
 			ent.remove();}
 		Location l = flag.getHomeLocation();
-		Item item = l.getBlock().getWorld().dropItem(l,flag.is);
+		Item item = spawnItem(l,flag.is);
 		flag.setEntity(item);
 		flag.home = true;
 		flags.put(item.getEntityId(), flag);
@@ -284,15 +307,26 @@ public class CTFArena extends Arena implements Runnable{
 			Bukkit.getScheduler().cancelTask(timerid);
 	}
 
-	private void teamScored(Team team) {
+	private synchronized void teamScored(Team team) {
+		/// For some servers multiple teamScored methods were being called, possibly due to a back log of onPlayerMove
+		/// Events that went off nearly simultaneously before flags could be reset, so now make this method synchronized,
+		/// and check the last capture time
+		Long lastc = lastCapture.get(team);
+		if (lastc != null && System.currentTimeMillis() - lastc < TIME_BETWEN_CAPTURES){
+			return;
+		} else {
+			lastCapture.put(team, System.currentTimeMillis());
+		}
 		int teamScore = addScore(team);
 		if (DEBUG) System.out.println("teamScore = " + teamScore +"   " + capturesToWin);
 		String score = getScoreString();
 		this.getMatch().sendMessage(team.getDisplayName() +" &ehas captured the flag!");
 		this.getMatch().sendMessage(score);
 		if (teamScore >= capturesToWin ){
-			setWinner(team);}
-		resetFlags();
+			setWinner(team);
+		} else {
+			resetFlags();
+		}
 	}
 
 
@@ -330,7 +364,7 @@ public class CTFArena extends Arena implements Runnable{
 	public void addFlag(Integer i, Location location) {
 		Location l = location.clone();
 		l.setX(location.getBlockX()+0.5);
-		l.setY(location.getBlockY()+0.5);
+		l.setY(location.getBlockY()+2);
 		l.setZ(location.getBlockZ()+0.5);
 		flagSpawns.put(i, l);
 	}

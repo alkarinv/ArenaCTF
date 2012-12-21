@@ -1,3 +1,5 @@
+configVersion: 2.0
+
 ## This should be places in the plugin directory
 ## for more help configuring see the wiki
 ## https://github.com/alkarinv/BattleArena/wiki
@@ -14,7 +16,11 @@ CaptureTheFlag:
     teamSize: 1+
     victoryCondition: highestKills
     preReqs:
-        options: [clearInventory]
+        options: []
+    onEnter:
+        options: [storeAll]
+    onLeave:
+        options: [restoreAll]
     onJoin:
         options: [teleportWaitRoom, pvpOff, hunger=20]
     onOpen:
