@@ -1,11 +1,5 @@
-version: 1.0
-
+version: 1.1
 ## Join Permissions "arena.ctf.join"
 
-
-### Events are server wide events that get announced to the server and need to be
-### created by an admin or scheduled (though BattleArena/config.yml has options to change this)
-### Matches allow players to queue and the game will start when enough people join
-isEvent: true
 flagRespawnTimer: 60 ## How long before a dropped flag automatically returns
 capturesToWin: 3

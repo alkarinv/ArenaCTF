@@ -6,15 +6,14 @@ configVersion: 2.0
 ## Change this file to customize your event
 
 CaptureTheFlag:
-    enabled: true
-    command: ctf
-    matchTime: 300 # in seconds
+    queue: true
     type: CaptureTheFlag
-    database: ctf # or delete if you dont want wins/losses/top, needs BattleTracker
     prefix: "&8[CTF]&e"
+    command: ctf
+    database: ctf # or delete if you dont want wins/losses/top, needs BattleTracker
+    matchTime: 300 # in seconds
     nTeams: 2
     teamSize: 1+
-    victoryCondition: highestKills
     preReqs:
         options: []
     onEnter:
