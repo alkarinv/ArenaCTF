@@ -1,4 +1,4 @@
-version: 1.1
+version: 1.1.1
 ## Join Permissions "arena.ctf.join"
 
 flagRespawnTimer: 60 ## How long before a dropped flag automatically returns

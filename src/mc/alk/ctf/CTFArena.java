@@ -11,17 +11,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import mc.alk.arena.BattleArena;
 import mc.alk.arena.controllers.PlayerStoreController;
+import mc.alk.arena.controllers.messaging.MatchMessageHandler;
 import mc.alk.arena.objects.ArenaPlayer;
 import mc.alk.arena.objects.MatchState;
 import mc.alk.arena.objects.arenas.Arena;
 import mc.alk.arena.objects.events.MatchEventHandler;
 import mc.alk.arena.objects.teams.Team;
+import mc.alk.arena.objects.victoryconditions.VictoryCondition;
 import mc.alk.arena.serializers.Persist;
 import mc.alk.arena.util.Log;
 import mc.alk.arena.util.TeamUtil;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -69,15 +70,20 @@ public class CTFArena extends Arena {
 	final Set<Material> flagMaterials = new HashSet<Material>();
 
 	Random rand = new Random();
+	MatchMessageHandler mmh;
 
 	@Override
 	public void onOpen(){
+		mmh = getMatch().getMessageHandler();
 		resetVars();
 		getMatch().addVictoryCondition(scores);
 	}
 
 	private void resetVars(){
-		scores = new FlagVictory(getMatch(),capturesToWin);
+		VictoryCondition vc = getMatch().getVictoryCondition(FlagVictory.class);
+		scores = (FlagVictory) (vc != null ? vc : new FlagVictory(getMatch()));
+		scores.setNumCaptures(capturesToWin);
+		scores.setMessageHandler(mmh);
 		flags.clear();
 		teamFlags.clear();
 		cancelTimers();
@@ -114,7 +120,7 @@ public class CTFArena extends Arena {
 			i++;
 			if (DEBUG) System.out.println("Team t = " + t);
 		}
-
+		scores.setFlags(teamFlags);
 		/// Schedule flame effects
 		timerid = Bukkit.getScheduler().scheduleSyncRepeatingTask(CTF.getSelf(), new Runnable(){
 			@Override
@@ -204,6 +210,8 @@ public class CTFArena extends Arena {
 		final Team t = getTeam(p);
 		final Flag flag = flags.get(id);
 
+		Map<String,String> params = getCaptureParams();
+		params.put("{player}",p.getDisplayName());
 		/// for some reason if I do flags.remove here... event.setCancelled(true) doesnt work!!!! oO
 		/// If anyone can explain this... I would be ecstatic, seriously.
 		if (flag.team.equals(t)){
@@ -212,19 +220,28 @@ public class CTFArena extends Arena {
 				flags.remove(id);
 				event.getItem().remove();
 				spawnFlag(flag);
-				t.sendMessage("&6"+p.getDisplayName() +"&2 has returned your flag home");
+				t.sendMessage(mmh.getMessage("CaptureTheFlag.player_returned_flag", params));
 			}
 		} else {
 			/// Give the enemy the flag
 			playerPickedUpFlag(p,flag);
+			Team fteam = flag.team;
+
 			for (Team team : getTeams()){
 				if (team.equals(t)){
-					team.sendMessage("&6"+p.getDisplayName() +"&a has taken the enemy flag!");
-				} else {
-					team.sendMessage("&6"+p.getDisplayName() +"&c has taken your flag!");
+					team.sendMessage(mmh.getMessage("CaptureTheFlag.taken_enemy_flag", params));
+				} else if (team.equals(fteam)){
+					team.sendMessage(mmh.getMessage("CaptureTheFlag.taken_your_flag", params));
 				}
 			}
 		}
+	}
+
+	private Map<String, String> getCaptureParams() {
+		Map<String,String> params = new HashMap<String,String>();
+		params.put("{prefix}", getMatch().getParams().getPrefix());
+		params.put("{maxcaptures}", capturesToWin+"");
+		return params;
 	}
 
 	@MatchEventHandler(needsPlayer=false)
@@ -290,6 +307,12 @@ public class CTFArena extends Arena {
 				removeFlag(capturedFlag);
 				spawnFlag(capturedFlag);
 			}
+			String score = scores.getScoreString();
+			Map<String,String> params = getCaptureParams();
+			params.put("{team}", t.getDisplayName());
+			params.put("{score}", score);
+			mmh.sendMessage("CaptureTheFlag.teamscored",params);
+
 		}
 	}
 
@@ -368,7 +391,8 @@ public class CTFArena extends Arena {
 			public void run() {
 				spawnFlag(flag);
 				Team team = flag.getTeam();
-				team.sendMessage(ChatColor.GREEN+"Your flag has been returned home");
+				Map<String,String> params = getCaptureParams();
+				team.sendMessage(mmh.getMessage("CaptureTheFlag.returned_flag",params));
 			}
 		}, FLAG_RESPAWN_TIMER);
 		respawnTimers.put(flag, timerid);
@@ -382,9 +406,7 @@ public class CTFArena extends Arena {
 
 	private synchronized boolean teamScored(Team team) {
 		int teamScore = scores.addScore(team);
-		String score = scores.getScoreString();
-		this.getMatch().sendMessage(team.getDisplayName() +" &ehas captured the flag!");
-		this.getMatch().sendMessage(score);
+
 		if (teamScore >= capturesToWin ){
 			setWinner(team);
 			return true;

@@ -1,6 +1,7 @@
 package mc.alk.ctf;
 
 import mc.alk.arena.BattleArena;
+import mc.alk.arena.objects.victoryconditions.VictoryType;
 import mc.alk.arena.util.Log;
 
 import org.bukkit.configuration.file.FileConfiguration;
@@ -20,11 +21,11 @@ public class CTF extends JavaPlugin{
 		loadConfig();
 
 		/// Register our competition
+		VictoryType.register(FlagVictory.class, this);
 		BattleArena.registerCompetition(this, "CaptureTheFlag", "ctf", CTFArena.class, new CTFExecutor());
 
 		Log.info("[" + getName()+ "] v" + getDescription().getVersion()+ " enabled!");
 	}
-
 
 	@Override
 	public void onDisable(){
