@@ -12,8 +12,12 @@ CaptureTheFlag:
     command: ctf
     database: ctf # or delete if you dont want wins/losses/top, needs BattleTracker
     matchTime: 300 # in seconds
+    joinType: Queue
+    victoryCondition: HighestKills
     nTeams: 2
     teamSize: 1+
+    defaults: ## Global options for the entire match
+        options: [woolTeams, alwaysTeamNames]
     preReqs:
         options: []
     onEnter:
@@ -25,13 +29,13 @@ CaptureTheFlag:
     onOpen:
         options: [pvpOff]
     onPrestart:
-        options: [pvpOff, deEnchant, woolTeams]
+        options: [pvpOff, deEnchant]
     onStart:
         options: [pvpOn, teleportIn, hunger=20]
     onDeath:
         options: [clearInventory, respawn]
     onComplete:
-        options: [teleportOut, clearInventory, deEnchant, undisguise]
+        options: [teleportOut]
     onSpawn:
         options: [health=20, hunger=20]
         giveClass:
