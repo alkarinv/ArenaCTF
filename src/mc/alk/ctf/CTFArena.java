@@ -16,7 +16,7 @@ import mc.alk.arena.objects.ArenaPlayer;
 import mc.alk.arena.objects.MatchState;
 import mc.alk.arena.objects.arenas.Arena;
 import mc.alk.arena.objects.events.MatchEventHandler;
-import mc.alk.arena.objects.teams.Team;
+import mc.alk.arena.objects.teams.ArenaTeam;
 import mc.alk.arena.objects.victoryconditions.VictoryCondition;
 import mc.alk.arena.serializers.Persist;
 import mc.alk.arena.util.Log;
@@ -55,7 +55,7 @@ public class CTFArena extends Arena {
 
 	final Map<Integer, Flag> flags = new ConcurrentHashMap<Integer, Flag>();
 
-	final ConcurrentHashMap<Team, Flag> teamFlags = new ConcurrentHashMap<Team, Flag>();
+	final ConcurrentHashMap<ArenaTeam, Flag> teamFlags = new ConcurrentHashMap<ArenaTeam, Flag>();
 
 	public static int capturesToWin = 3;
 
@@ -65,7 +65,7 @@ public class CTFArena extends Arena {
 
 	Map<Flag, Integer> respawnTimers = new HashMap<Flag,Integer>();
 
-	final Map<Team, Long> lastCapture = new ConcurrentHashMap<Team, Long>();
+	final Map<ArenaTeam, Long> lastCapture = new ConcurrentHashMap<ArenaTeam, Long>();
 
 	final Set<Material> flagMaterials = new HashSet<Material>();
 
@@ -94,7 +94,7 @@ public class CTFArena extends Arena {
 
 	@Override
 	public void onStart(){
-		List<Team> teams = getTeams();
+		List<ArenaTeam> teams = getTeams();
 		if (flagSpawns.size() < teams.size()){
 			Log.err("Cancelling CTF as there " + teams.size()+" teams but only " + flagSpawns.size() +" flags");
 			getMatch().cancelMatch();
@@ -106,7 +106,7 @@ public class CTFArena extends Arena {
 		int i =0;
 		for (Location l: flagSpawns.values()){
 			l = l.clone();
-			Team t = teams.get(i);
+			ArenaTeam t = teams.get(i);
 			/// Create our flag
 			ItemStack is = TeamUtil.getTeamHead(i);
 			Flag f = new Flag(t,is,l);
@@ -157,11 +157,10 @@ public class CTFArena extends Arena {
 			@Override
 			public void run() {updateCompassLocations();}
 		}, 0L, 5*20L);
-
 	}
 
 	private void updateCompassLocations() {
-		List<Team> teams = getTeams();
+		List<ArenaTeam> teams = getTeams();
 		Flag f;
 		for (int i=0;i<teams.size();i++){
 			int oteam = i == teams.size()-1 ? 0 : i+1;
@@ -207,7 +206,7 @@ public class CTFArena extends Arena {
 			return;}
 		final int id = event.getItem().getEntityId();
 		final Player p = event.getPlayer();
-		final Team t = getTeam(p);
+		final ArenaTeam t = getTeam(p);
 		final Flag flag = flags.get(id);
 
 		Map<String,String> params = getCaptureParams();
@@ -225,9 +224,9 @@ public class CTFArena extends Arena {
 		} else {
 			/// Give the enemy the flag
 			playerPickedUpFlag(p,flag);
-			Team fteam = flag.team;
+			ArenaTeam fteam = flag.team;
 
-			for (Team team : getTeams()){
+			for (ArenaTeam team : getTeams()){
 				if (team.equals(t)){
 					team.sendMessage(mmh.getMessage("CaptureTheFlag.taken_enemy_flag", params));
 				} else if (team.equals(fteam)){
@@ -286,7 +285,7 @@ public class CTFArena extends Arena {
 			return;}
 		if (this.getMatchState() != MatchState.ONSTART)
 			return;
-		Team t = getTeam(event.getPlayer());
+		ArenaTeam t = getTeam(event.getPlayer());
 		Flag f = teamFlags.get(t);
 		if (f.isHome() && nearLocation(f.getCurrentLocation(),event.getTo())){
 			Flag capturedFlag = flags.get(event.getPlayer().getEntityId());
@@ -390,7 +389,7 @@ public class CTFArena extends Arena {
 			@Override
 			public void run() {
 				spawnFlag(flag);
-				Team team = flag.getTeam();
+				ArenaTeam team = flag.getTeam();
 				Map<String,String> params = getCaptureParams();
 				team.sendMessage(mmh.getMessage("CaptureTheFlag.returned_flag",params));
 			}
@@ -404,7 +403,7 @@ public class CTFArena extends Arena {
 			Bukkit.getScheduler().cancelTask(timerid);
 	}
 
-	private synchronized boolean teamScored(Team team) {
+	private synchronized boolean teamScored(ArenaTeam team) {
 		int teamScore = scores.addScore(team);
 
 		if (teamScore >= capturesToWin ){

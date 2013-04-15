@@ -1,6 +1,6 @@
 package mc.alk.ctf;
 
-import mc.alk.arena.objects.teams.Team;
+import mc.alk.arena.objects.teams.ArenaTeam;
 import mc.alk.arena.util.InventoryUtil;
 import mc.alk.arena.util.SerializerUtil;
 
@@ -16,13 +16,13 @@ public class Flag {
 
 	boolean home; /// is our flag at home
 
-	final Team team; /// which team this flag belongs to
+	final ArenaTeam team; /// which team this flag belongs to
 
 	final ItemStack is; /// what type of item is our flag
 
 	final Location homeLocation; /// our spawn location
 
-	public Flag(Team team, ItemStack is, Location homeLocation){
+	public Flag(ArenaTeam team, ItemStack is, Location homeLocation){
 		this.team = team;
 		this.home = true;
 		this.is = is;
@@ -51,7 +51,7 @@ public class Flag {
 		return ent;
 	}
 
-	public Team getTeam() {
+	public ArenaTeam getTeam() {
 		return team;
 	}
 
