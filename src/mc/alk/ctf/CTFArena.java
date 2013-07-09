@@ -15,7 +15,7 @@ import mc.alk.arena.controllers.messaging.MatchMessageHandler;
 import mc.alk.arena.objects.ArenaPlayer;
 import mc.alk.arena.objects.MatchState;
 import mc.alk.arena.objects.arenas.Arena;
-import mc.alk.arena.objects.events.MatchEventHandler;
+import mc.alk.arena.objects.events.ArenaEventHandler;
 import mc.alk.arena.objects.teams.ArenaTeam;
 import mc.alk.arena.objects.victoryconditions.VictoryCondition;
 import mc.alk.arena.serializers.Persist;
@@ -165,6 +165,8 @@ public class CTFArena extends Arena {
 		for (int i=0;i<teams.size();i++){
 			int oteam = i == teams.size()-1 ? 0 : i+1;
 			f = teamFlags.get(teams.get(oteam));
+			if (f == null)
+				continue;
 			for (ArenaPlayer ap: teams.get(i).getLivingPlayers()){
 				Player p = ap.getPlayer();
 				if (p != null && p.isOnline()){
@@ -187,7 +189,7 @@ public class CTFArena extends Arena {
 		resetVars();
 	}
 
-	@MatchEventHandler
+	@ArenaEventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent event){
 		if (event.isCancelled())
 			return ;
@@ -200,7 +202,7 @@ public class CTFArena extends Arena {
 			playerDroppedFlag(flag, item);}
 	}
 
-	@MatchEventHandler
+	@ArenaEventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent event){
 		if (!flags.containsKey(event.getItem().getEntityId())){
 			return;}
@@ -243,14 +245,14 @@ public class CTFArena extends Arena {
 		return params;
 	}
 
-	@MatchEventHandler(needsPlayer=false)
+	@ArenaEventHandler(needsPlayer=false)
 	public void onItemDespawn(ItemDespawnEvent event){
 		if (flags.containsKey(event.getEntity().getEntityId())){
 			event.setCancelled(true);
 		}
 	}
 
-	@MatchEventHandler
+	@ArenaEventHandler
 	public void onPlayerDeath(PlayerDeathEvent event){
 		Flag flag = flags.remove(event.getEntity().getEntityId());
 		if (flag == null)
@@ -273,7 +275,7 @@ public class CTFArena extends Arena {
 		playerDroppedFlag(flag, item);
 	}
 
-	@MatchEventHandler
+	@ArenaEventHandler
 	public void onPlayerMove(PlayerMoveEvent event){
 		if (event.isCancelled())
 			return;
@@ -298,11 +300,11 @@ public class CTFArena extends Arena {
 			} else {
 				lastCapture.put(t, System.currentTimeMillis());
 			}
-
+			ArenaPlayer ap = BattleArena.toArenaPlayer(event.getPlayer());
 			/// for some reason sometimes its not cleared in removeFlags
 			/// so do it explicitly now
 			try{event.getPlayer().getInventory().remove(f.is);}catch(Exception e){}
-			if (!teamScored(t)){
+			if (!teamScored(t,ap)){
 				removeFlag(capturedFlag);
 				spawnFlag(capturedFlag);
 			}
@@ -315,7 +317,7 @@ public class CTFArena extends Arena {
 		}
 	}
 
-	@MatchEventHandler
+	@ArenaEventHandler
 	public void onBlockPlace(BlockPlaceEvent event){
 		if (!flags.containsKey(event.getPlayer().getEntityId()))
 			return;
@@ -403,8 +405,8 @@ public class CTFArena extends Arena {
 			Bukkit.getScheduler().cancelTask(timerid);
 	}
 
-	private synchronized boolean teamScored(ArenaTeam team) {
-		int teamScore = scores.addScore(team);
+	private synchronized boolean teamScored(ArenaTeam team, ArenaPlayer player) {
+		int teamScore = scores.addScore(team,player);
 
 		if (teamScore >= capturesToWin ){
 			setWinner(team);

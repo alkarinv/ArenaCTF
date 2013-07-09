@@ -11,8 +11,9 @@ import mc.alk.arena.controllers.messaging.MatchMessageHandler;
 import mc.alk.arena.events.matches.MatchFindCurrentLeaderEvent;
 import mc.alk.arena.events.matches.messages.MatchIntervalMessageEvent;
 import mc.alk.arena.events.matches.messages.MatchTimeExpiredMessageEvent;
+import mc.alk.arena.objects.ArenaPlayer;
+import mc.alk.arena.objects.events.ArenaEventHandler;
 import mc.alk.arena.objects.events.EventPriority;
-import mc.alk.arena.objects.events.MatchEventHandler;
 import mc.alk.arena.objects.scoreboard.ArenaDisplaySlot;
 import mc.alk.arena.objects.scoreboard.ArenaObjective;
 import mc.alk.arena.objects.scoreboard.ArenaScoreboard;
@@ -37,7 +38,6 @@ public class FlagVictory extends VictoryCondition implements DefinesLeaderRankin
 		scores.setDisplayName(ChatColor.GOLD+"Flag Captures");
 		ArenaScoreboard scoreboard = match.getScoreboard();
 		scores.setDisplaySlot(ArenaDisplaySlot.SIDEBAR);
-		scores.setDisplayPlayers(false);
 		scoreboard.addObjective(scores);
 
 		/// set all points to 0 so they display in Scoreboard
@@ -85,16 +85,17 @@ public class FlagVictory extends VictoryCondition implements DefinesLeaderRankin
 		scores.setAllPoints(match, 0);
 	}
 
-	public Integer addScore(ArenaTeam team) {
+	public Integer addScore(ArenaTeam team, ArenaPlayer ap) {
+		scores.addPoints(ap, 1);
 		return scores.addPoints(team, 1);
 	}
 
-	@MatchEventHandler(priority=EventPriority.HIGHEST)
+	@ArenaEventHandler(priority=EventPriority.HIGHEST)
 	public void onMatchFindCurrentLeaderEvent(MatchFindCurrentLeaderEvent event){
 		event.setResult(scores.getMatchResult(match));
 	}
 
-	@MatchEventHandler
+	@ArenaEventHandler
 	public void onMatchIntervalMessage(MatchIntervalMessageEvent event){
 		Map<String,String> map = new HashMap<String,String>();
 		map.put("{prefix}", match.getParams().getPrefix());
@@ -103,7 +104,7 @@ public class FlagVictory extends VictoryCondition implements DefinesLeaderRankin
 		event.setMatchMessage(mmh.getMessage("CaptureTheFlag.time_remaining", map));
 	}
 
-	@MatchEventHandler
+	@ArenaEventHandler
 	public void onMatchTimeExpiredMessage(MatchTimeExpiredMessageEvent event){
 		StringBuilder sb = new StringBuilder();
 		Map<String,String> map = new HashMap<String,String>();
