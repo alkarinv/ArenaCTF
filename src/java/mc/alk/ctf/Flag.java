@@ -1,13 +1,15 @@
 package mc.alk.ctf;
 
 import mc.alk.arena.objects.teams.ArenaTeam;
-import mc.alk.arena.util.EntityUtil;
 import mc.alk.arena.util.InventoryUtil;
+import mc.alk.arena.util.Log;
 import mc.alk.arena.util.SerializerUtil;
-
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
+
+import java.lang.reflect.Method;
 
 public class Flag {
 	static int count = 0;
@@ -22,6 +24,28 @@ public class Flag {
 	final ItemStack is; /// what type of item is our flag
 
 	final Location homeLocation; /// our spawn location
+
+    static Method isValidMethod;
+    static boolean isValid = true;
+
+    /**
+     * And a large workaround so that I can be compatible with 1.2.5 (aka Tekkit Servers)
+     * who will not have the method Entity#isValid()
+     */
+    static {
+        try {
+            final String pkg = Bukkit.getServer().getClass().getPackage().getName();
+            String version = pkg.substring(pkg.lastIndexOf('.') + 1);
+            if (version.equalsIgnoreCase("craftbukkit")){
+                isValidMethod = Entity.class.getMethod("isDead");
+                isValid = false;
+            } else {
+                isValidMethod = Entity.class.getMethod("isValid");
+            }
+        } catch (Exception e) {
+            Log.printStackTrace(e);
+        }
+    }
 
 	public Flag(ArenaTeam team, ItemStack is, Location homeLocation){
 		this.team = team;
@@ -76,8 +100,11 @@ public class Flag {
 	}
 
     public boolean isValid() {
-//        return ent.isDead();
-        return EntityUtil.isValid()
-        return ent.isValid();
+        try {
+            return (Boolean) isValidMethod.invoke(ent);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return true;
+        }
     }
 }

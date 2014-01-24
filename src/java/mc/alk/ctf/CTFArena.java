@@ -149,7 +149,7 @@ public class CTFArena extends Arena {
 					}
 				}
 			}
-		}, 0L, 5*20L);
+		}, 0L, 6*20L);
 
 		/// Schedule compass Updates
 		compassRespawnId = Bukkit.getScheduler().scheduleSyncRepeatingTask(CTF.getSelf(), new Runnable(){
