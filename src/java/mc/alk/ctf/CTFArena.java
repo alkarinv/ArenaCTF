@@ -1,14 +1,5 @@
 package mc.alk.ctf;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import mc.alk.arena.BattleArena;
 import mc.alk.arena.controllers.PlayerStoreController;
 import mc.alk.arena.controllers.messaging.MatchMessageHandler;
@@ -21,7 +12,6 @@ import mc.alk.arena.objects.victoryconditions.VictoryCondition;
 import mc.alk.arena.serializers.Persist;
 import mc.alk.arena.util.Log;
 import mc.alk.arena.util.TeamUtil;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -37,6 +27,15 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CTFArena extends Arena {
 	public static final boolean DEBUG = false;
@@ -145,7 +144,7 @@ public class CTFArena extends Arena {
 			@Override
 			public void run() {
 				for (Flag flag: flags.values()){
-					if (flag.isHome() && !flag.getEntity().isValid()){
+					if (flag.isHome() && !flag.isValid()){
 						spawnFlag(flag);
 					}
 				}
@@ -303,7 +302,7 @@ public class CTFArena extends Arena {
 			ArenaPlayer ap = BattleArena.toArenaPlayer(event.getPlayer());
 			/// for some reason sometimes its not cleared in removeFlags
 			/// so do it explicitly now
-			try{event.getPlayer().getInventory().remove(f.is);}catch(Exception e){}
+			try{event.getPlayer().getInventory().remove(f.is);}catch(Exception e){ /* do nothing*/}
 			if (!teamScored(t,ap)){
 				removeFlag(capturedFlag);
 				spawnFlag(capturedFlag);
@@ -313,8 +312,12 @@ public class CTFArena extends Arena {
 			params.put("{team}", t.getDisplayName());
 			params.put("{score}", score);
 			mmh.sendMessage("CaptureTheFlag.teamscored",params);
-
 		}
+	}
+
+	public void captured(ArenaPlayer player) {
+		ArenaTeam t = player.getTeam();
+		teamScored(t,player);
 	}
 
 	@ArenaEventHandler
@@ -445,9 +448,10 @@ public class CTFArena extends Arena {
 	@Override
 	public List<String> getInvalidReasons(){
 		List<String> reasons = new ArrayList<String>();
-		if (flagSpawns == null || flagSpawns.size() < 2){
+		if (flagSpawns.size() < 2){
 			reasons.add("You need to add at least 2 flags!");}
 		reasons.addAll(super.getInvalidReasons());
 		return reasons;
 	}
+
 }

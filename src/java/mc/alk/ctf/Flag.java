@@ -1,6 +1,7 @@
 package mc.alk.ctf;
 
 import mc.alk.arena.objects.teams.ArenaTeam;
+import mc.alk.arena.util.EntityUtil;
 import mc.alk.arena.util.InventoryUtil;
 import mc.alk.arena.util.SerializerUtil;
 
@@ -37,11 +38,12 @@ public class Flag {
 		return is.getType() == is2.getType() && is.getDurability() == is2.getDurability();
 	}
 
-	@Override
+	@SuppressWarnings("SimplifiableIfStatement")
+    @Override
 	public boolean equals(Object other) {
 		if (this == other) return true;
 		if (!(other instanceof Flag)) return false;
-		return this.hashCode() == ((Flag) other).hashCode();
+		return this.hashCode() == other.hashCode();
 	}
 
 	@Override
@@ -65,10 +67,17 @@ public class Flag {
 
 	@Override
 	public String toString(){
-		return String.format("[Flag %d: ent=%s, home=%s, team=%d, is=%s, homeloc=%s]",
-				id,ent == null ? "null" :ent.getType(),home,
+		return String.format("[Flag %d: ent=%s, home=%s, team=%s, is=%s, homeloc=%s]",
+				id,
+                ent == null ? "null" :ent.getType(),home,
 				team == null ? "null" : team.getId(),
 				is == null ? "null" : InventoryUtil.getItemString(is),
 				homeLocation==null? "null" : SerializerUtil.getLocString(homeLocation));
 	}
+
+    public boolean isValid() {
+//        return ent.isDead();
+        return EntityUtil.isValid()
+        return ent.isValid();
+    }
 }

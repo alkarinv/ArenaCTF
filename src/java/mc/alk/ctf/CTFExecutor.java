@@ -1,6 +1,7 @@
 package mc.alk.ctf;
 
 import mc.alk.arena.BattleArena;
+import mc.alk.arena.competition.match.Match;
 import mc.alk.arena.executors.CustomCommandExecutor;
 import mc.alk.arena.executors.MCCommand;
 import mc.alk.arena.objects.ArenaPlayer;
@@ -34,4 +35,10 @@ public class CTFExecutor extends CustomCommandExecutor{
 		return sendMessage(sender,"&2Flags cleared for &6"+arena.getName());
 	}
 
+	@MCCommand(cmds={"capture"}, op=true)
+	public static boolean capture(CommandSender sender, ArenaPlayer player) {
+		Match m = BattleArena.getBAController().getMatch(player);
+		((CTFArena)m.getArena()).captured(player);
+        return sendMessage(sender,"&2Flag was captured by &6"+player.getName());
+	}
 }
