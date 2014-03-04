@@ -6,13 +6,13 @@ import mc.alk.arena.executors.CustomCommandExecutor;
 import mc.alk.arena.executors.MCCommand;
 import mc.alk.arena.objects.ArenaPlayer;
 import mc.alk.arena.objects.arenas.Arena;
-
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 public class CTFExecutor extends CustomCommandExecutor{
 
-	@MCCommand(cmds={"addFlag"}, inGame=true, admin=true)
-	public static boolean addFlag(ArenaPlayer sender, Arena arena, Integer index) {
+	@MCCommand(cmds={"addFlag"}, admin=true)
+	public static boolean addFlag(Player sender, Arena arena, Integer index) {
 		if (!(arena instanceof CTFArena)){
 			return sendMessage(sender,"&eArena " + arena.getName() +" is not a CTF arena!");
 		}
