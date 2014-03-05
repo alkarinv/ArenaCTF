@@ -9,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class CTF extends JavaPlugin{
 	static CTF plugin;
+    static final int bukkitID = 47869; /// https://api.curseforge.com/servermods/projects?search=arenactf
 
 	@Override
 	public void onEnable(){
@@ -23,8 +24,8 @@ public class CTF extends JavaPlugin{
 		/// Register our competition
 		VictoryType.register(FlagVictory.class, this);
 		BattleArena.registerCompetition(this, "CaptureTheFlag", "ctf", CTFArena.class, new CTFExecutor());
-
-		Log.info("[" + getName()+ "] v" + getDescription().getVersion()+ " enabled!");
+        CTFTransition.values();
+        Log.info("[" + getName()+ "] v" + getDescription().getVersion()+ " enabled!");
 	}
 
 	@Override
