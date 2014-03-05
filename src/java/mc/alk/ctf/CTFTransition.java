@@ -7,7 +7,8 @@ import mc.alk.arena.objects.CompetitionTransition;
  * @author alkarin
  */
 public enum CTFTransition implements CompetitionTransition {
-    ONFLAGCAPTURE("onFlagCapture"), ONFLAGPICKUP("onFlagPickup"), ONFLAGDROP("onFlagDrop");
+    ONFLAGCAPTURE("onFlagCapture"), ONFLAGPICKUP("onFlagPickup"), ONFLAGDROP("onFlagDrop"),
+    ONFLAGRETURN("onFlagReturn");
 
     String name;
     int globalOrdinal;

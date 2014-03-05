@@ -217,15 +217,15 @@ public class CTFArena extends Arena {
         /// If anyone can explain this... I would be ecstatic, seriously.
         if (flag.team.equals(t)){
             event.setCancelled(true);
-            if (!flag.isHome()){  /// Return the flag back to its home location
-                flags.remove(id);
+            if (!flag.isHome()) {  /// Return the flag back to its home location
+                playerReturnedFlag(p, flag);
                 event.getItem().remove();
-                spawnFlag(flag);
                 t.sendMessage(mmh.getMessage("CaptureTheFlag.player_returned_flag", params));
             }
         } else {
             /// Give the enemy the flag
             playerPickedUpFlag(p,flag);
+
             ArenaTeam fteam = flag.team;
 
             for (ArenaTeam team : getTeams()){
@@ -237,6 +237,7 @@ public class CTFArena extends Arena {
             }
         }
     }
+
 
     private Map<String, String> getCaptureParams() {
         Map<String,String> params = new HashMap<String,String>();
@@ -364,6 +365,15 @@ public class CTFArena extends Arena {
         } else {
             flag.ent.remove();
         }
+    }
+    private void playerReturnedFlag(Player player, Flag flag) {
+        flags.remove(flag.ent.getEntityId());
+        spawnFlag(flag);
+        PerformTransition.transition(this,
+                CTFTransition.ONFLAGRETURN,
+                BattleArena.toArenaPlayer(player),
+                null,
+                true);
     }
 
     private void playerPickedUpFlag(Player player, Flag flag) {
