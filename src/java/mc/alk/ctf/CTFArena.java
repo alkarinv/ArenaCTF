@@ -224,7 +224,7 @@ public class CTFArena extends Arena {
             }
         } else {
             /// Give the enemy the flag
-            playerPickedUpFlag(p,flag);
+            playerPickedUpFlag(p, flag);
 
             ArenaTeam fteam = flag.team;
 
@@ -321,7 +321,7 @@ public class CTFArena extends Arena {
         ArenaTeam t = player.getTeam();
         teamScored(t,player);
 
-        PerformTransition.transition(this,
+        PerformTransition.transition(getMatch(),
                 CTFTransition.ONFLAGCAPTURE,
                 player,
                 t,
@@ -369,7 +369,7 @@ public class CTFArena extends Arena {
     private void playerReturnedFlag(Player player, Flag flag) {
         flags.remove(flag.ent.getEntityId());
         spawnFlag(flag);
-        PerformTransition.transition(this,
+        PerformTransition.transition(getMatch(),
                 CTFTransition.ONFLAGRETURN,
                 BattleArena.toArenaPlayer(player),
                 null,
@@ -383,7 +383,7 @@ public class CTFArena extends Arena {
         flags.put(player.getEntityId(), flag);
         cancelFlagRespawnTimer(flag);
         if (flag.getEntity() instanceof Player)
-            PerformTransition.transition(this,
+            PerformTransition.transition(getMatch(),
                     CTFTransition.ONFLAGPICKUP,
                     BattleArena.toArenaPlayer(player),
                     null,
@@ -392,7 +392,7 @@ public class CTFArena extends Arena {
 
     private void playerDroppedFlag(Flag flag, Item item) {
         if (flag.getEntity() instanceof Player)
-            PerformTransition.transition(this,
+            PerformTransition.transition(getMatch(),
                     CTFTransition.ONFLAGDROP,
                     BattleArena.toArenaPlayer((Player)flag.getEntity()),
                     null,
