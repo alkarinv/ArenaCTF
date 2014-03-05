@@ -1,6 +1,7 @@
 package mc.alk.ctf;
 
 import mc.alk.arena.BattleArena;
+import mc.alk.arena.controllers.StateController;
 import mc.alk.arena.objects.victoryconditions.VictoryType;
 import mc.alk.arena.util.Log;
 
@@ -23,8 +24,8 @@ public class CTF extends JavaPlugin{
 
 		/// Register our competition
 		VictoryType.register(FlagVictory.class, this);
+        StateController.register(CTFTransition.class);
 		BattleArena.registerCompetition(this, "CaptureTheFlag", "ctf", CTFArena.class, new CTFExecutor());
-        CTFTransition.values();
         Log.info("[" + getName()+ "] v" + getDescription().getVersion()+ " enabled!");
 	}
 

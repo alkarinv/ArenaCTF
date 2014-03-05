@@ -313,19 +313,14 @@ public class CTFArena extends Arena {
             Map<String,String> params = getCaptureParams();
             params.put("{team}", t.getDisplayName());
             params.put("{score}", score);
+
+            PerformTransition.transition(getMatch(),
+                    CTFTransition.ONFLAGCAPTURE,
+                    ap,
+                    t,
+                    true);
             mmh.sendMessage("CaptureTheFlag.teamscored",params);
         }
-    }
-
-    public void captured(ArenaPlayer player) {
-        ArenaTeam t = player.getTeam();
-        teamScored(t,player);
-
-        PerformTransition.transition(getMatch(),
-                CTFTransition.ONFLAGCAPTURE,
-                player,
-                t,
-                true);
     }
 
     @ArenaEventHandler
