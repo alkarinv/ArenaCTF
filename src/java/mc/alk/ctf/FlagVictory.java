@@ -1,7 +1,7 @@
 package mc.alk.ctf;
 
 import mc.alk.arena.competition.match.Match;
-import mc.alk.arena.controllers.messaging.MatchMessageHandler;
+import mc.alk.arena.objects.messaging.MatchMessageHandler;
 import mc.alk.arena.events.matches.MatchFindCurrentLeaderEvent;
 import mc.alk.arena.events.matches.messages.MatchIntervalMessageEvent;
 import mc.alk.arena.events.matches.messages.MatchTimeExpiredMessageEvent;

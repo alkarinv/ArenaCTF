@@ -1,13 +1,12 @@
 package mc.alk.ctf;
 
 import mc.alk.arena.BattleArena;
-import mc.alk.arena.competition.match.PerformTransition;
 import mc.alk.arena.controllers.PlayerStoreController;
-import mc.alk.arena.controllers.messaging.MatchMessageHandler;
 import mc.alk.arena.objects.ArenaPlayer;
 import mc.alk.arena.objects.MatchState;
 import mc.alk.arena.objects.arenas.Arena;
 import mc.alk.arena.objects.events.ArenaEventHandler;
+import mc.alk.arena.objects.messaging.MatchMessageHandler;
 import mc.alk.arena.objects.teams.ArenaTeam;
 import mc.alk.arena.objects.victoryconditions.VictoryCondition;
 import mc.alk.arena.serializers.Persist;
@@ -314,14 +313,11 @@ public class CTFArena extends Arena {
             params.put("{team}", t.getDisplayName());
             params.put("{score}", score);
 
-            PerformTransition.transition(getMatch(),
-                    CTFTransition.ONFLAGCAPTURE,
-                    ap,
-                    t,
-                    true);
+            performTransition(CTFTransition.ONFLAGCAPTURE,ap);
             mmh.sendMessage("CaptureTheFlag.teamscored",params);
         }
     }
+
 
     @ArenaEventHandler
     public void onBlockPlace(BlockPlaceEvent event){
@@ -364,11 +360,7 @@ public class CTFArena extends Arena {
     private void playerReturnedFlag(Player player, Flag flag) {
         flags.remove(flag.ent.getEntityId());
         spawnFlag(flag);
-        PerformTransition.transition(getMatch(),
-                CTFTransition.ONFLAGRETURN,
-                BattleArena.toArenaPlayer(player),
-                null,
-                true);
+        performTransition(CTFTransition.ONFLAGRETURN,BattleArena.toArenaPlayer(player));
     }
 
     private void playerPickedUpFlag(Player player, Flag flag) {
@@ -378,20 +370,13 @@ public class CTFArena extends Arena {
         flags.put(player.getEntityId(), flag);
         cancelFlagRespawnTimer(flag);
         if (flag.getEntity() instanceof Player)
-            PerformTransition.transition(getMatch(),
-                    CTFTransition.ONFLAGPICKUP,
-                    BattleArena.toArenaPlayer(player),
-                    null,
-                    true);
+            performTransition(CTFTransition.ONFLAGPICKUP,BattleArena.toArenaPlayer(player));
     }
 
     private void playerDroppedFlag(Flag flag, Item item) {
         if (flag.getEntity() instanceof Player)
-            PerformTransition.transition(getMatch(),
-                    CTFTransition.ONFLAGDROP,
-                    BattleArena.toArenaPlayer((Player)flag.getEntity()),
-                    null,
-                    true);
+            performTransition(CTFTransition.ONFLAGDROP,BattleArena.toArenaPlayer((Player)flag.getEntity()));
+
         flags.remove(flag.ent.getEntityId());
         flag.setEntity(item);
         flags.put(item.getEntityId(), flag);
